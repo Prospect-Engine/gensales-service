@@ -11,7 +11,9 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "jest",
-    "prisma:generate": "prisma generate --schema=../ashborn/prisma/schema.prisma"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

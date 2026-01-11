@@ -19,8 +19,8 @@ export interface MatchResult {
   match_type?: 'URN_ID' | 'LINKEDIN_URL' | 'EMAIL' | 'NEW';
   existing_data?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    firstName: string | null;
+    lastName: string | null;
     email: string | null;
     linkedinUrl: string | null;
     customFields: any;

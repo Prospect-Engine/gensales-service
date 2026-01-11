@@ -92,7 +92,7 @@ export class ContactMergerService {
           isLead: true,
           leadSource: 'LINKEDIN_OUTREACH',
           leadStatus: 'NEW',
-          customFields: linkedinData as Prisma.InputJsonValue,
+          customFields: linkedinData as any,
         },
         select: {
           id: true,
@@ -161,7 +161,7 @@ export class ContactMergerService {
       const existingCustomFields = (existing.customFields || {}) as Record<string, any>;
 
       // Build update data based on merge strategy
-      const updateData: Prisma.ContactUpdateInput = {};
+      const updateData: Record<string, any> = {};
 
       // Fields to always update (LinkedIn-specific)
       const linkedinData: Record<string, any> = {
@@ -208,7 +208,7 @@ export class ContactMergerService {
       }
 
       // Update customFields with LinkedIn data
-      updateData.customFields = linkedinData as Prisma.InputJsonValue;
+      updateData.customFields = linkedinData as any;
 
       // Perform the update
       await this.prisma.contact.update({
@@ -250,21 +250,19 @@ export class ContactMergerService {
       await this.prisma.activity.create({
         data: {
           organizationId,
-          userId: organizationId, // System action - use org ID as placeholder
-          entityType: 'CONTACT',
-          entityId: contactId,
-          type: action === 'created' ? 'CUSTOM' : 'STATUS_CHANGED',
+          contactId,
+          type: action === 'created' ? 'NOTE' : 'NOTE',
           title:
             action === 'created'
               ? 'Contact created from LinkedIn connection'
               : 'Contact updated from LinkedIn sync',
           description: `LinkedIn connection accepted. Profile: ${connectionData.name}`,
-          metadata: {
+          customFields: {
             source: 'OUTREACH_SYNC',
             connectionId: connectionData.id,
             linkedinUrl: connectionData.profile_url,
             connectedOn: connectionData.connected_on,
-          } as Prisma.InputJsonValue,
+          } as any,
         },
       });
     } catch (error) {

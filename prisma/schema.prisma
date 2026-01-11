@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Contact {
+  id              String    @id @default(uuid()) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  workspaceId     String?   @map("workspace_id") @db.Uuid
+
+  // Basic info
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  email           String?
+  phone           String?
+  jobTitle        String?   @map("job_title")
+
+  // Social/Web
+  linkedinUrl     String?   @map("linkedin_url")
+  twitterUrl      String?   @map("twitter_url")
+  websiteUrl      String?   @map("website_url")
+  profileImageUrl String?   @map("profile_image_url")
+
+  // Lead info
+  isLead          Boolean   @default(true) @map("is_lead")
+  leadSource      String?   @map("lead_source")
+  leadStatus      String?   @map("lead_status")
+  leadScore       Int?      @map("lead_score")
+  priority        String?
+
+  // Custom data
+  customFields    Json?     @map("custom_fields")
+
+  // Relations
+  companyId       String?   @map("company_id") @db.Uuid
+  company         Company?  @relation(fields: [companyId], references: [id])
+  activities      Activity[]
+  deals           Deal[]
+
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("contacts")
+}
+
+model Company {
+  id              String    @id @default(uuid()) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  workspaceId     String?   @map("workspace_id") @db.Uuid
+
+  name            String
+  industry        String?
+  size            String?
+  website         String?
+  phone           String?
+  email           String?
+  address         String?
+  city            String?
+  country         String?
+
+  customFields    Json?     @map("custom_fields")
+
+  // Relations
+  contacts        Contact[]
+  deals           Deal[]
+  activities      Activity[]
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("companies")
+}
+
+model Deal {
+  id              String    @id @default(uuid()) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  workspaceId     String?   @map("workspace_id") @db.Uuid
+
+  title           String
+  value           Decimal?  @db.Decimal(12, 2)
+  currency        String    @default("USD")
+  stage           String    @default("LEAD")
+  probability     Int?
+  expectedCloseDate DateTime? @map("expected_close_date")
+  actualCloseDate DateTime?  @map("actual_close_date")
+  status          String    @default("OPEN")
+
+  // Relations
+  contactId       String?   @map("contact_id") @db.Uuid
+  contact         Contact?  @relation(fields: [contactId], references: [id])
+  companyId       String?   @map("company_id") @db.Uuid
+  company         Company?  @relation(fields: [companyId], references: [id])
+  activities      Activity[]
+
+  customFields    Json?     @map("custom_fields")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("deals")
+}
+
+model Activity {
+  id              String    @id @default(uuid()) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  workspaceId     String?   @map("workspace_id") @db.Uuid
+
+  type            String    // CALL, EMAIL, MEETING, NOTE, TASK
+  title           String
+  description     String?
+  status          String    @default("PENDING")
+  dueDate         DateTime? @map("due_date")
+  completedAt     DateTime? @map("completed_at")
+
+  // Relations
+  contactId       String?   @map("contact_id") @db.Uuid
+  contact         Contact?  @relation(fields: [contactId], references: [id])
+  companyId       String?   @map("company_id") @db.Uuid
+  company         Company?  @relation(fields: [companyId], references: [id])
+  dealId          String?   @map("deal_id") @db.Uuid
+  deal            Deal?     @relation(fields: [dealId], references: [id])
+
+  customFields    Json?     @map("custom_fields")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("activities")
+}

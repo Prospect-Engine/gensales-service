@@ -5,7 +5,7 @@
  * Provides shared entities (Company, Contact) for all Geniefy products.
  */
 
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { AuthMiddleware } from '../../shared';
 
 import { PrismaModule } from './prisma/prisma.module';
@@ -34,7 +34,12 @@ export class AppModule implements NestModule {
     // Apply auth middleware to all routes except webhooks, auth, and health endpoints
     consumer
       .apply(AuthMiddleware)
-      .exclude('webhooks/(.*)', 'auth/(.*)', 'health(.*)')
+      .exclude(
+        { path: 'webhooks/*path', method: RequestMethod.ALL },
+        { path: 'auth/*path', method: RequestMethod.ALL },
+        { path: 'health', method: RequestMethod.ALL },
+        { path: 'health/*path', method: RequestMethod.ALL },
+      )
       .forRoutes('*');
   }
 }

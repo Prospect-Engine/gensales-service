@@ -6,7 +6,7 @@
  */
 
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { TenantLoginDto, TenantLoginResponseDto } from './dto/tenant-login.dto';
 import { baseServiceConfig } from '../../../../shared';
 
@@ -114,6 +114,7 @@ export class AuthService {
     payload: Omit<JwtPayload, 'iat' | 'exp'>,
     expiresIn: string,
   ): string {
-    return jwt.sign(payload, this.jwtSecret, { expiresIn });
+    const options: SignOptions = { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] };
+    return jwt.sign(payload as object, this.jwtSecret, options);
   }
 }
