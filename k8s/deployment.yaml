@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gensales-service
+  namespace: production
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: gensales-service
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: gensales-service
+    spec:
+      containers:
+        - name: gensales-service
+          image: registry.sendout.ai/gensales-service:prod
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3010
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: gensales-config
+            - secretRef:
+                name: gensales-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3010
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3010
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      imagePullSecrets:
+        - name: docker-credential
+      nodeSelector:
+        kubernetes.io/hostname: prospect-primary
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gensales-svc
+  namespace: production
+spec:
+  ports:
+    - name: http
+      port: 3010
+      protocol: TCP
+      targetPort: 3010
+  selector:
+    app: gensales-service
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    kubernetes.io/ingress.class: traefik
+    kubernetes.io/tls-acme: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-to-https@kubernetescrd
+  labels:
+    app: gensales-service
+  name: gensales-ingress
+  namespace: production
+spec:
+  rules:
+    - host: crm-api.geniefy.ai
+      http:
+        paths:
+          - backend:
+              service:
+                name: gensales-svc
+                port:
+                  number: 3010
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - crm-api.geniefy.ai
+      secretName: gensales-tls-secret
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gensales-config
+  namespace: production
+data:
+  NODE_ENV: "production"
+  GENCRM_PORT: "3010"
+  MAIN_BACKEND_URL: "http://white-walker-svc:3000"
+  FRONTEND_URL: "https://app.geniefy.ai"
+
+---
+# Secrets should be created manually or via sealed-secrets
+# kubectl create secret generic gensales-secrets \
+#   --from-literal=DATABASE_URL=postgresql://... \
+#   --from-literal=REDIS_URL=redis://... \
+#   --from-literal=AUTH_JWT_SECRET=...

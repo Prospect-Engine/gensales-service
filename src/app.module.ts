@@ -10,6 +10,7 @@ import { AuthMiddleware } from '../../shared';
 
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { HealthModule } from './modules/health/health.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { DealsModule } from './modules/deals/deals.module';
@@ -20,6 +21,7 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
   imports: [
     PrismaModule,
     AuthModule,
+    HealthModule,
     CompaniesModule,
     ContactsModule,
     DealsModule,
@@ -29,10 +31,10 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply auth middleware to all routes except webhooks and auth endpoints
+    // Apply auth middleware to all routes except webhooks, auth, and health endpoints
     consumer
       .apply(AuthMiddleware)
-      .exclude('webhooks/(.*)', 'auth/(.*)')
+      .exclude('webhooks/(.*)', 'auth/(.*)', 'health(.*)')
       .forRoutes('*');
   }
 }
