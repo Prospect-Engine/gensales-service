@@ -9,6 +9,7 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AuthMiddleware } from '../../shared';
 
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { DealsModule } from './modules/deals/deals.module';
@@ -18,6 +19,7 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 @Module({
   imports: [
     PrismaModule,
+    AuthModule,
     CompaniesModule,
     ContactsModule,
     DealsModule,
@@ -27,10 +29,10 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply auth middleware to all routes except webhooks
+    // Apply auth middleware to all routes except webhooks and auth endpoints
     consumer
       .apply(AuthMiddleware)
-      .exclude('webhooks/(.*)')
+      .exclude('webhooks/(.*)', 'auth/(.*)')
       .forRoutes('*');
   }
 }
